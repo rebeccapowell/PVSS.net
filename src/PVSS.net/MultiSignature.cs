@@ -93,7 +93,7 @@ namespace PVSS.net
             Guard.NotNull(commitment, nameof(commitment));
             Guard.NotLessThanOrEqualTo(commitment.Length, 0, nameof(commitment));
 
-            return Sha256(commitment);
+            return Digests.Sha256(commitment);
         }
 
         /// <summary>
@@ -110,7 +110,7 @@ namespace PVSS.net
             Guard.NotNull(commitmentHash, nameof(commitmentHash));
             Guard.NotLessThanOrEqualTo(commitmentHash.Length, 0, nameof(commitmentHash));
 
-            var computedHash = Sha256(commitment);
+            var computedHash = Digests.Sha256(commitment);
             return computedHash.SequenceEqual(commitmentHash);
         }
 
@@ -192,7 +192,7 @@ namespace PVSS.net
             challenge = Concat(challenge, message);
 
             // do computing hash as BigInteger
-            var challengeInt = new BigInteger(1, Sha3(challenge));
+            var challengeInt = new BigInteger(1, Digests.Sha3(challenge));
 
             // reduce the challenge modulo curve order
             return challengeInt.Mod(_secp256k1.Parameters.N).ToByteArray();
@@ -411,9 +411,7 @@ namespace PVSS.net
         public static byte[] Concat(byte[] first, byte[] second)
         {
             Guard.NotNull(first, nameof(first));
-            Guard.NotLessThanOrEqualTo(first.Length, 0, nameof(first));
             Guard.NotNull(second, nameof(second));
-            Guard.NotLessThanOrEqualTo(second.Length, 0, nameof(second));
 
             var ret = new byte[first.Length + second.Length];
             Buffer.BlockCopy(first, 0, ret, 0, first.Length);
@@ -421,39 +419,6 @@ namespace PVSS.net
             return ret;
         }
 
-        /// <summary>
-        ///     SAH3 hash of [data].
-        /// </summary>
-        /// <param name="data"></param>
-        /// <returns></returns>
-        private byte[] Sha3(byte[] data)
-        {
-            Guard.NotNull(data, nameof(data));
-            Guard.NotLessThanOrEqualTo(data.Length, 0, nameof(data));
-
-            var digest = new Sha3Digest(512);
-            digest.BlockUpdate(data, 0, data.Length);
-            var result = new byte[64]; // 512 / 8 = 64
-            digest.DoFinal(result, 0);
-            return result;
-        }
-
-        /// <summary>
-        ///     SHA256 hash of [data].
-        /// </summary>
-        /// <param name="data"></param>
-        /// <returns></returns>
-        private byte[] Sha256(byte[] data)
-        {
-            Guard.NotNull(data, nameof(data));
-            Guard.NotLessThanOrEqualTo(data.Length, 0, nameof(data));
-
-            var digest = new Sha256Digest();
-            digest.BlockUpdate(data, 0, data.Length);
-            var result = new byte[digest.GetDigestSize()];
-            digest.DoFinal(result, 0);
-
-            return result;
-        }
+        
     }
 }

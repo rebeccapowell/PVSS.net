@@ -12,7 +12,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using NUnit.Framework;
 using Org.BouncyCastle.Math;
 using PVSS.net;
@@ -47,7 +46,9 @@ namespace PVSS.Net.Tests
             byte[] commitmentSecret = null;
 
             var exception =
-                Assert.Throws<NullReferenceException>(() => signatureService.ComputeCommitment(commitmentSecret));
+                // ReSharper disable once ExpressionIsAlwaysNull
+                Assert.Throws<ArgumentNullException>(() => signatureService.ComputeCommitment(commitmentSecret));
+            Assert.IsTrue(exception.Message.StartsWith("[commitmentSecret] cannot be Null."));
         }
 
         [Test]
@@ -55,7 +56,8 @@ namespace PVSS.Net.Tests
         {
             var signatureService = new MultiSignature(_sepSecp256K1);
             var commitmentSecret = new byte[0];
-            var exception = Assert.Throws<FormatException>(() => signatureService.ComputeCommitment(commitmentSecret));
+            var exception = Assert.Throws<ArgumentOutOfRangeException>(() => signatureService.ComputeCommitment(commitmentSecret));
+            Assert.IsTrue(exception.Message.StartsWith("[commitmentSecret] cannot be less than or equal to 0."));
         }
 
         [Test]
@@ -86,16 +88,22 @@ namespace PVSS.Net.Tests
             List<byte[]> commitments = null;
 
             var exception =
-                Assert.Throws<NullReferenceException>(() => signatureService.AggregateCommitments(commitments, bitmap));
+                // ReSharper disable once ExpressionIsAlwaysNull
+                Assert.Throws<ArgumentNullException>(() => signatureService.AggregateCommitments(commitments, bitmap));
+            Console.WriteLine(exception.Message);
+            Assert.IsTrue(exception.Message.StartsWith("[commitments] cannot be Null."));
         }
 
+        [Test]
         public void TestAggregateCommitmentsEmptyCommitments()
         {
             var signatureService = new MultiSignature(_sepSecp256K1);
             long bitmap = 3;
             var commitments = new List<byte[]>();
 
-            var exception = Assert.Throws<Exception>(() => signatureService.AggregateCommitments(commitments, bitmap));
+            var exception = Assert.Throws<ArgumentOutOfRangeException>(() => signatureService.AggregateCommitments(commitments, bitmap));
+            Console.WriteLine(exception.Message);
+            Assert.IsTrue(exception.Message.StartsWith("[commitments] cannot be less than or equal to 0."));
         }
 
         [Test]
@@ -115,203 +123,275 @@ namespace PVSS.Net.Tests
                 signatureService.AggregateCommitments(commitments, bitmap).ToHexString());
         }
 
-        /*
-         *@Test(expected = IllegalArgumentException.class)
-    public void testComputeChallengeNullPublicKeys() {
-        MultiSignatureService signatureService = AppServiceProvider.getMultiSignatureService();
-        long bitmap = 0b111;
-        ArrayList<byte[]> publicKeys = null;
-        byte[] publicKey = new PublicKey(new PrivateKey()).getValue();
-        ArrayList<byte[]> commitments = new ArrayList<>();
-        byte[] aggregatedCommitment;
-        commitments.add(Util.hexStringToByteArray("02181b4df800671642e3df9a953a29a4f571acc1bf0714ed5ae714a9804d97079f"));
-        commitments.add(Util.hexStringToByteArray("02e8196913323fbb7a34d9455b778e877e1d1fa0205b5949504e55a2d999931366"));
-        commitments.add(Util.hexStringToByteArray("02ef67409f09053060e79d8ad5b1fe60690b5eaa35b67f071ca111a0a7edeb6b38"));
+        
+        [Test]
+        public void TestComputeChallengeNullPublicKeys()
+        {
+            var signatureService = new MultiSignature(_sepSecp256K1);
+            long bitmap = 0b111;
+            List<byte[]> publicKeys = null;
 
-        aggregatedCommitment = signatureService.aggregateCommitments(commitments, bitmap);
-        signatureService.computeChallenge(publicKeys, publicKey, aggregatedCommitment, "hello".getBytes(), bitmap);
-    }
+            var keyPair = new Participant("Alice");
+            var publicKey = keyPair.PublicKey;
+            var commitments = new List<byte[]>
+            {
+                "02181b4df800671642e3df9a953a29a4f571acc1bf0714ed5ae714a9804d97079f".ToByteArray(),
+                "02e8196913323fbb7a34d9455b778e877e1d1fa0205b5949504e55a2d999931366".ToByteArray(),
+                "02ef67409f09053060e79d8ad5b1fe60690b5eaa35b67f071ca111a0a7edeb6b38".ToByteArray()
+            };
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testComputeChallengeEmptyPublicKeys() {
-        MultiSignatureService signatureService = AppServiceProvider.getMultiSignatureService();
-        long bitmap = 0b111;
-        ArrayList<byte[]> publicKeys = new ArrayList<>();
-        byte[] publicKey = new PublicKey(new PrivateKey()).getValue();
-        ArrayList<byte[]> commitments = new ArrayList<>();
-        byte[] aggregatedCommitment;
-        commitments.add(Util.hexStringToByteArray("02181b4df800671642e3df9a953a29a4f571acc1bf0714ed5ae714a9804d97079f"));
-        commitments.add(Util.hexStringToByteArray("02e8196913323fbb7a34d9455b778e877e1d1fa0205b5949504e55a2d999931366"));
-        commitments.add(Util.hexStringToByteArray("02ef67409f09053060e79d8ad5b1fe60690b5eaa35b67f071ca111a0a7edeb6b38"));
+            var aggregatedCommitment = signatureService.AggregateCommitments(commitments, bitmap);
 
-        aggregatedCommitment = signatureService.aggregateCommitments(commitments, bitmap);
-        signatureService.computeChallenge(publicKeys, publicKey, aggregatedCommitment, "hello".getBytes(), bitmap);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testComputeChallengeNullPublicKey() {
-        MultiSignatureService signatureService = AppServiceProvider.getMultiSignatureService();
-        long bitmap = 0b111;
-        ArrayList<byte[]> publicKeys = new ArrayList<>();
-        byte[] publicKey = null;
-        ArrayList<byte[]> commitments = new ArrayList<>();
-        byte[] aggregatedCommitment;
-
-        commitments.add(Util.hexStringToByteArray("02181b4df800671642e3df9a953a29a4f571acc1bf0714ed5ae714a9804d97079f"));
-        commitments.add(Util.hexStringToByteArray("02e8196913323fbb7a34d9455b778e877e1d1fa0205b5949504e55a2d999931366"));
-        commitments.add(Util.hexStringToByteArray("02ef67409f09053060e79d8ad5b1fe60690b5eaa35b67f071ca111a0a7edeb6b38"));
-        publicKeys.add(new PublicKey(new PrivateKey()).getValue());
-        aggregatedCommitment = signatureService.aggregateCommitments(commitments, bitmap);
-
-        signatureService.computeChallenge(publicKeys, publicKey, aggregatedCommitment, "hello".getBytes(), bitmap);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testComputeChallengeNullAggregatedCommitment() {
-        MultiSignatureService signatureService = AppServiceProvider.getMultiSignatureService();
-        long bitmap = 0b111;
-        ArrayList<byte[]> publicKeys = new ArrayList<>();
-        byte[] publicKey = new PublicKey(new PrivateKey()).getValue();
-        ArrayList<byte[]> commitments = new ArrayList<>();
-        byte[] aggregatedCommitment;
-
-        commitments.add(Util.hexStringToByteArray("02181b4df800671642e3df9a953a29a4f571acc1bf0714ed5ae714a9804d97079f"));
-        commitments.add(Util.hexStringToByteArray("02e8196913323fbb7a34d9455b778e877e1d1fa0205b5949504e55a2d999931366"));
-        commitments.add(Util.hexStringToByteArray("02ef67409f09053060e79d8ad5b1fe60690b5eaa35b67f071ca111a0a7edeb6b38"));
-        publicKeys.add(new PublicKey(new PrivateKey()).getValue());
-        publicKeys.add(new PublicKey((new PrivateKey())).getValue());
-        publicKeys.add(publicKey);
-        aggregatedCommitment = null;
-
-        signatureService.computeChallenge(publicKeys, publicKey, aggregatedCommitment, "hello".getBytes(), bitmap);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testComputeChallengeEmptyAggregatedCommitment() {
-        MultiSignatureService signatureService = AppServiceProvider.getMultiSignatureService();
-        long bitmap = 0b111;
-        ArrayList<byte[]> publicKeys = new ArrayList<>();
-        byte[] publicKey = new PublicKey(new PrivateKey()).getValue();
-        ArrayList<byte[]> commitments = new ArrayList<>();
-        byte[] aggregatedCommitment = new byte[0];
-
-        commitments.add(Util.hexStringToByteArray("02181b4df800671642e3df9a953a29a4f571acc1bf0714ed5ae714a9804d97079f"));
-        commitments.add(Util.hexStringToByteArray("02e8196913323fbb7a34d9455b778e877e1d1fa0205b5949504e55a2d999931366"));
-        commitments.add(Util.hexStringToByteArray("02ef67409f09053060e79d8ad5b1fe60690b5eaa35b67f071ca111a0a7edeb6b38"));
-        publicKeys.add(new PublicKey(new PrivateKey()).getValue());
-        publicKeys.add(new PublicKey((new PrivateKey())).getValue());
-        publicKeys.add(publicKey);
-
-        signatureService.computeChallenge(publicKeys, publicKey, aggregatedCommitment, "hello".getBytes(), bitmap);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testComputeChallengeNullMessage() {
-        MultiSignatureService signatureService = AppServiceProvider.getMultiSignatureService();
-        long bitmap = 0b111;
-        ArrayList<byte[]> publicKeys = new ArrayList<>();
-        byte[] publicKey = new PublicKey(new PrivateKey()).getValue();
-        ArrayList<byte[]> commitments = new ArrayList<>();
-        byte[] aggregatedCommitment;
-        byte[] message = null;
-
-        commitments.add(Util.hexStringToByteArray("02181b4df800671642e3df9a953a29a4f571acc1bf0714ed5ae714a9804d97079f"));
-        commitments.add(Util.hexStringToByteArray("02e8196913323fbb7a34d9455b778e877e1d1fa0205b5949504e55a2d999931366"));
-        commitments.add(Util.hexStringToByteArray("02ef67409f09053060e79d8ad5b1fe60690b5eaa35b67f071ca111a0a7edeb6b38"));
-        publicKeys.add(new PublicKey(new PrivateKey()).getValue());
-        publicKeys.add(new PublicKey((new PrivateKey())).getValue());
-        publicKeys.add(publicKey);
-
-        aggregatedCommitment = signatureService.aggregateCommitments(commitments, bitmap);
-        signatureService.computeChallenge(publicKeys, publicKey, aggregatedCommitment, message, bitmap);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testComputeChallengeEmptyMessage() {
-        MultiSignatureService signatureService = AppServiceProvider.getMultiSignatureService();
-        long bitmap = 0b111;
-        ArrayList<byte[]> publicKeys = new ArrayList<>();
-        byte[] publicKey = new PublicKey(new PrivateKey()).getValue();
-        ArrayList<byte[]> commitments = new ArrayList<>();
-        byte[] aggregatedCommitment;
-        byte[] message = "".getBytes();
-
-        commitments.add(Util.hexStringToByteArray("02181b4df800671642e3df9a953a29a4f571acc1bf0714ed5ae714a9804d97079f"));
-        commitments.add(Util.hexStringToByteArray("02e8196913323fbb7a34d9455b778e877e1d1fa0205b5949504e55a2d999931366"));
-        commitments.add(Util.hexStringToByteArray("02ef67409f09053060e79d8ad5b1fe60690b5eaa35b67f071ca111a0a7edeb6b38"));
-        publicKeys.add(new PublicKey(new PrivateKey()).getValue());
-        publicKeys.add(new PublicKey((new PrivateKey())).getValue());
-        publicKeys.add(publicKey);
-
-        aggregatedCommitment = signatureService.aggregateCommitments(commitments, bitmap);
-        signatureService.computeChallenge(publicKeys, publicKey, aggregatedCommitment, message, bitmap);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testComputeSignatureShareNullChallenge() {
-        MultiSignatureService signatureService = AppServiceProvider.getMultiSignatureService();
-        byte[] challenge = null;
-        byte[] privateKey = new PrivateKey().getValue();
-        byte[] commitmentSecret = signatureService.computeCommitmentSecret();
-
-        signatureService.computeSignatureShare(challenge, privateKey, commitmentSecret);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testComputeSignatureShareEmptyChallenge() {
-        MultiSignatureService signatureService = AppServiceProvider.getMultiSignatureService();
-        byte[] challenge = new byte[0];
-        byte[] privateKey = new PrivateKey().getValue();
-        byte[] commitmentSecret = signatureService.computeCommitmentSecret();
-
-        signatureService.computeSignatureShare(challenge, privateKey, commitmentSecret);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testComputeSignatureShareNullPrivateKey() {
-        MultiSignatureService signatureService = AppServiceProvider.getMultiSignatureService();
-        byte[] challenge = Util.SHA3.get().digest("dummy challenge".getBytes());
-        byte[] privateKey = null;
-        byte[] commitmentSecret = signatureService.computeCommitmentSecret();
-
-        signatureService.computeSignatureShare(challenge, privateKey, commitmentSecret);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testComputeSignatureShareEmptyPrivateKey() {
-        MultiSignatureService signatureService = AppServiceProvider.getMultiSignatureService();
-        byte[] commitmentSecret = signatureService.computeCommitmentSecret();
-        byte[] challenge = Util.SHA3.get().digest("dummy challenge".getBytes());
-        byte[] privateKey = new byte[0];
-
-        signatureService.computeSignatureShare(challenge, privateKey, commitmentSecret);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testComputeSignatureShareNullCommitmentSecret() {
-        MultiSignatureService signatureService = AppServiceProvider.getMultiSignatureService();
-        byte[] challenge = Util.SHA3.get().digest("dummy challenge".getBytes());
-        byte[] privateKey = new PrivateKey().getValue();;
-        byte[] commitmentSecret = null;
-
-        signatureService.computeSignatureShare(challenge, privateKey, commitmentSecret);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testComputeSignatureShareEmptyCommitmentSecret() {
-        MultiSignatureService signatureService = AppServiceProvider.getMultiSignatureService();
-        byte[] commitmentSecret = new byte[0];
-        byte[] challenge = Util.SHA3.get().digest("dummy challenge".getBytes());
-        byte[] privateKey = new PrivateKey().getValue();
-
-        signatureService.computeSignatureShare(challenge, privateKey, commitmentSecret);
-    }
-         *
-         *
-         */
+            var exception = Assert.Throws<ArgumentNullException>(() => 
+                signatureService.ComputeChallenge(publicKeys, publicKey, aggregatedCommitment, "hello".ToHexEncodedByteArray(), bitmap));
+            Console.WriteLine(exception.Message);
+            Assert.IsTrue(exception.Message.StartsWith("[signers] cannot be Null."));
+        }
 
         [Test]
-        public void TestVerifySignatureShareOK()
+        public void TestComputeChallengeEmptyPublicKeys()
+        {
+            var signatureService = new MultiSignature(_sepSecp256K1);
+            long bitmap = 0b111;
+            List<byte[]> publicKeys = new List<byte[]>();
+
+            var keyPair = new Participant("Alice");
+            var publicKey = keyPair.PublicKey;
+            var commitments = new List<byte[]>
+            {
+                "02181b4df800671642e3df9a953a29a4f571acc1bf0714ed5ae714a9804d97079f".ToByteArray(),
+                "02e8196913323fbb7a34d9455b778e877e1d1fa0205b5949504e55a2d999931366".ToByteArray(),
+                "02ef67409f09053060e79d8ad5b1fe60690b5eaa35b67f071ca111a0a7edeb6b38".ToByteArray()
+            };
+
+            var aggregatedCommitment = signatureService.AggregateCommitments(commitments, bitmap);
+
+            var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
+                signatureService.ComputeChallenge(publicKeys, publicKey, aggregatedCommitment, "hello".ToHexEncodedByteArray(), bitmap));
+            Console.WriteLine(exception.Message);
+            Assert.IsTrue(exception.Message.StartsWith("[signers] cannot be less than or equal to 0."));
+        }
+
+        [Test]
+        public void TestComputeChallengeNullPublicKey()
+        {
+            var signatureService = new MultiSignature(_sepSecp256K1);
+            long bitmap = 0b111;
+            List<byte[]> publicKeys = new List<byte[]>();
+            byte[] publicKey = null;
+
+            var commitments = new List<byte[]>
+            {
+                "02181b4df800671642e3df9a953a29a4f571acc1bf0714ed5ae714a9804d97079f".ToByteArray(),
+                "02e8196913323fbb7a34d9455b778e877e1d1fa0205b5949504e55a2d999931366".ToByteArray(),
+                "02ef67409f09053060e79d8ad5b1fe60690b5eaa35b67f071ca111a0a7edeb6b38".ToByteArray(),
+                new Participant("Commitment").PublicKey
+            };
+
+            var aggregatedCommitment = signatureService.AggregateCommitments(commitments, bitmap);
+
+            var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
+                signatureService.ComputeChallenge(publicKeys, publicKey, aggregatedCommitment, "hello".ToHexEncodedByteArray(), bitmap));
+            Console.WriteLine(exception.Message);
+            Assert.IsTrue(exception.Message.StartsWith("[signers] cannot be less than or equal to 0."));
+        }
+
+        [Test]
+        public void TestComputeChallengeNullAggregatedCommitment()
+        {
+            var signatureService = new MultiSignature(_sepSecp256K1);
+            long bitmap = 0b111;
+            List<byte[]> publicKeys = new List<byte[]>();
+            byte[] publicKey = new Participant("Alice").PublicKey;
+
+            var commitments = new List<byte[]>
+            {
+                "02181b4df800671642e3df9a953a29a4f571acc1bf0714ed5ae714a9804d97079f".ToByteArray(),
+                "02e8196913323fbb7a34d9455b778e877e1d1fa0205b5949504e55a2d999931366".ToByteArray(),
+                "02ef67409f09053060e79d8ad5b1fe60690b5eaa35b67f071ca111a0a7edeb6b38".ToByteArray(),
+                new Participant("Commitment 1").PublicKey,
+                new Participant("Commitment 2").PublicKey,
+                publicKey
+            };
+
+
+            byte[] aggregatedCommitment = null;
+
+            var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
+                signatureService.ComputeChallenge(publicKeys, publicKey, aggregatedCommitment, "hello".ToHexEncodedByteArray(), bitmap));
+            Console.WriteLine(exception.Message);
+            Assert.IsTrue(exception.Message.StartsWith("[signers] cannot be less than or equal to 0."));
+        }
+
+        [Test]
+        public void TestComputeChallengeEmptyAggregatedCommitment()
+        {
+            var signatureService = new MultiSignature(_sepSecp256K1);
+            long bitmap = 0b111;
+            List<byte[]> publicKeys = new List<byte[]>();
+            byte[] publicKey = new Participant("Alice").PublicKey;
+
+            var commitments = new List<byte[]>
+            {
+                "02181b4df800671642e3df9a953a29a4f571acc1bf0714ed5ae714a9804d97079f".ToByteArray(),
+                "02e8196913323fbb7a34d9455b778e877e1d1fa0205b5949504e55a2d999931366".ToByteArray(),
+                "02ef67409f09053060e79d8ad5b1fe60690b5eaa35b67f071ca111a0a7edeb6b38".ToByteArray(),
+                new Participant("Commitment 1").PublicKey,
+                new Participant("Commitment 2").PublicKey,
+                publicKey
+            };
+
+
+            byte[] aggregatedCommitment = new byte[0];
+
+            var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
+                signatureService.ComputeChallenge(publicKeys, publicKey, aggregatedCommitment, "hello".ToHexEncodedByteArray(), bitmap));
+            Console.WriteLine(exception.Message);
+            Assert.IsTrue(exception.Message.StartsWith("[signers] cannot be less than or equal to 0."));
+        }
+
+        [Test]
+        public void TestComputeChallengeNullMessage()
+        {
+            var signatureService = new MultiSignature(_sepSecp256K1);
+            long bitmap = 0b111;
+            List<byte[]> publicKeys = new List<byte[]>();
+            byte[] publicKey = new Participant("Alice").PublicKey;
+            byte[] message = null;
+
+            var commitments = new List<byte[]>
+            {
+                "02181b4df800671642e3df9a953a29a4f571acc1bf0714ed5ae714a9804d97079f".ToByteArray(),
+                "02e8196913323fbb7a34d9455b778e877e1d1fa0205b5949504e55a2d999931366".ToByteArray(),
+                "02ef67409f09053060e79d8ad5b1fe60690b5eaa35b67f071ca111a0a7edeb6b38".ToByteArray(),
+                new Participant("Commitment 1").PublicKey,
+                new Participant("Commitment 2").PublicKey,
+                publicKey
+            };
+
+
+            byte[] aggregatedCommitment = new byte[0];
+
+            var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
+                // ReSharper disable once ExpressionIsAlwaysNull
+                signatureService.ComputeChallenge(publicKeys, publicKey, aggregatedCommitment, message, bitmap));
+            Console.WriteLine(exception.Message);
+            Assert.IsTrue(exception.Message.StartsWith("[signers] cannot be less than or equal to 0."));
+        }
+
+        [Test]
+        public void TestComputeChallengeEmptyMessage()
+        {
+            var signatureService = new MultiSignature(_sepSecp256K1);
+            long bitmap = 0b111;
+            List<byte[]> publicKeys = new List<byte[]>();
+            byte[] publicKey = new Participant("Alice").PublicKey;
+
+            var commitments = new List<byte[]>
+            {
+                "02181b4df800671642e3df9a953a29a4f571acc1bf0714ed5ae714a9804d97079f".ToByteArray(),
+                "02e8196913323fbb7a34d9455b778e877e1d1fa0205b5949504e55a2d999931366".ToByteArray(),
+                "02ef67409f09053060e79d8ad5b1fe60690b5eaa35b67f071ca111a0a7edeb6b38".ToByteArray(),
+                new Participant("Commitment 1").PublicKey,
+                new Participant("Commitment 2").PublicKey,
+                publicKey
+            };
+
+
+            byte[] aggregatedCommitment = new byte[0];
+
+            var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
+                signatureService.ComputeChallenge(publicKeys, publicKey, aggregatedCommitment, string.Empty.ToHexEncodedByteArray(), bitmap));
+            Console.WriteLine(exception.Message);
+            Assert.IsTrue(exception.Message.StartsWith("[signers] cannot be less than or equal to 0."));
+        }
+
+        [Test]
+        public void TestComputeSignatureShareNullChallenge()
+        {
+            var signatureService = new MultiSignature(_sepSecp256K1);
+            byte[] challenge = null;
+            byte[] privateKey = new Participant("Alice").PrivateKey;
+            byte[] commitmentSecret = signatureService.ComputeCommitmentSecret();
+
+            var exception = Assert.Throws<ArgumentNullException>(() =>
+                signatureService.ComputeSignatureShare(challenge, privateKey, commitmentSecret));
+            Console.WriteLine(exception.Message);
+            Assert.IsTrue(exception.Message.StartsWith("[challenge] cannot be Null."));
+        }
+
+        [Test]
+        public void TestComputeSignatureShareEmptyChallenge()
+        {
+            var signatureService = new MultiSignature(_sepSecp256K1);
+            byte[] challenge = new byte[0];
+            byte[] privateKey = new Participant("Alice").PrivateKey;
+            byte[] commitmentSecret = signatureService.ComputeCommitmentSecret();
+
+            var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
+                signatureService.ComputeSignatureShare(challenge, privateKey, commitmentSecret));
+            Console.WriteLine(exception.Message);
+            Assert.IsTrue(exception.Message.StartsWith("[challenge] cannot be less than or equal to 0."));
+        }
+
+        [Test]
+        public void TestComputeSignatureShareNullPrivateKey()
+        {
+            var signatureService = new MultiSignature(_sepSecp256K1);
+            byte[] challenge = Digests.Sha3("dummy challenge".ToHexEncodedByteArray());
+            byte[] privateKey = null;
+            byte[] commitmentSecret = signatureService.ComputeCommitmentSecret();
+
+            var exception = Assert.Throws<ArgumentNullException>(() => 
+                signatureService.ComputeSignatureShare(challenge, privateKey, commitmentSecret));
+            Console.WriteLine(exception.Message);
+            Assert.IsTrue(exception.Message.StartsWith("[privateKey] cannot be Null."));
+        }
+
+        [Test]
+        public void TestComputeSignatureShareEmptyPrivateKey()
+        {
+            var signatureService = new MultiSignature(_sepSecp256K1);
+            byte[] commitmentSecret = signatureService.ComputeCommitmentSecret();
+            byte[] challenge = Digests.Sha3("dummy challenge".ToHexEncodedByteArray());
+            byte[] privateKey = new byte[0];
+
+            var exception = Assert.Throws<ArgumentOutOfRangeException>(() => 
+                signatureService.ComputeSignatureShare(challenge, privateKey, commitmentSecret));
+            Console.WriteLine(exception.Message);
+            Assert.IsTrue(exception.Message.StartsWith("[privateKey] cannot be less than or equal to 0."));
+        }
+
+        [Test]
+        public void TestComputeSignatureShareNullCommitmentSecret()
+        {
+            var signatureService = new MultiSignature(_sepSecp256K1);
+            byte[] challenge = Digests.Sha3("dummy challenge".ToHexEncodedByteArray());
+            byte[] privateKey = new Participant("Alice").PrivateKey;
+            byte[] commitmentSecret = null;
+
+            var exception = Assert.Throws<ArgumentNullException>(() => 
+                signatureService.ComputeSignatureShare(challenge, privateKey, commitmentSecret));
+            Console.WriteLine(exception.Message);
+            Assert.IsTrue(exception.Message.StartsWith("[commitmentSecret] cannot be Null."));
+        }
+
+        [Test]
+        public void TestComputeSignatureShareEmptyCommitmentSecret()
+        {
+            var signatureService = new MultiSignature(_sepSecp256K1);
+            byte[] commitmentSecret = new byte[0];
+            byte[] challenge = Digests.Sha3("dummy challenge".ToHexEncodedByteArray());
+            byte[] privateKey = new Participant("Alice").PrivateKey;
+
+            var exception = Assert.Throws<ArgumentOutOfRangeException>(() => 
+                signatureService.ComputeSignatureShare(challenge, privateKey, commitmentSecret));
+            Console.WriteLine(exception.Message);
+            Assert.IsTrue(exception.Message.StartsWith("[commitmentSecret] cannot be less than or equal to 0."));
+        }
+
+        [Test]
+        public void TestVerifySignatureShareOk()
         {
             var signatureService = new MultiSignature(_sepSecp256K1);
             var signers = new List<byte[]>();
@@ -323,9 +403,7 @@ namespace PVSS.Net.Tests
             var carol = new Participant("Carol");
 
             long bitmap = 0;
-            var message = string
-                .Concat("The quick brown fox jumps over the lazy dog.".Select(x => ((int) x).ToString("x")))
-                .ToByteArray();
+            var message = "The quick brown fox jumps over the lazy dog.".ToHexEncodedByteArray();
 
             signers.Add(alice.PublicKey);
             signers.Add(bob.PublicKey);

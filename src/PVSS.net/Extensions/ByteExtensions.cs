@@ -38,25 +38,5 @@ namespace PVSS.net.Extensions
 
             return reversed;
         }
-
-        public static byte[] ToByteArray(this string hex)
-        {
-            var NumberChars = hex.Length;
-            var bytes = new byte[NumberChars / 2];
-            for (var i = 0; i < NumberChars; i += 2)
-                bytes[i / 2] = Convert.ToByte(hex.Substring(i, 2), 16);
-            return bytes;
-        }
-
-        public static int GetHexVal(char hex)
-        {
-            int val = hex;
-            //For uppercase A-F letters:
-            //return val - (val < 58 ? 48 : 55);
-            //For lowercase a-f letters:
-            //return val - (val < 58 ? 48 : 87);
-            //Or the two combined, but a bit slower:
-            return val - (val < 58 ? 48 : val < 97 ? 55 : 87);
-        }
     }
 }
