@@ -7,7 +7,7 @@ This is a test project. It is not production ready and is unlilely to ever be. Y
 - Rough port of [Java implementation](https://github.com/ElrondNetwork/elrond-node-prototype/blob/master/elrond-core/)
 
 ## Usage
-See [MultiSignaureTest](https://github.com/rebeccapowell/PVSS.net/blob/main/src/PVSS.Net.Tests/MultisignatureTest.cs)
+See [MultiSignaureTest](https://github.com/rebeccapowell/PVSS.net/blob/main/src/PVSS.Net.Tests/MultiSignatureTest.cs)
 
 ```
 var signatureService = new MultiSignature(_sepSecp256K1);
