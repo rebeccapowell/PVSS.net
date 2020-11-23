@@ -50,7 +50,7 @@ Assert.IsTrue(signatureService.VerifySignatureShare(
     bitmap));
 ```
 
-## Nest Steps
+## Next Steps
 - [Publicly Verifiable Secret Sharing](https://www.ubilab.org/publications/print_versions/pdf/sta96.pdf)
 - [MPSS: Mobile Proactive Secret Sharing](http://pmg.lcs.mit.edu/papers/a34-schultz.pdf)
 - To do....
