@@ -1,15 +1,20 @@
+// // -----------------------------------------------------------------------
+// // <copyright file="UnitTest1.cs" company="Rebecca Powell" year="2020">
+// //      All rights are reserved. Reproduction or transmission in whole or
+// //      in part, in any form or by any means, electronic, mechanical or
+// //      otherwise, is prohibited without the prior written consent of the
+// //      copyright owner.
+// // </copyright>
+// // <summary>
+// //      Definition of the UnitTest1.cs class.
+// // </summary>
+// // -----------------------------------------------------------------------
+
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
-using System.Net.Mime;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 using NUnit.Framework;
-using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Math;
-using Org.BouncyCastle.Utilities.Encoders;
 using PVSS.net;
 using PVSS.net.Extensions;
 
@@ -28,9 +33,9 @@ namespace PVSS.Net.Tests
         [Test]
         public void TestComputeCommitmentSecretNotZero()
         {
-            MultiSignatureService signatureService = new MultiSignatureService(_sepSecp256K1);
-            byte[] commitmentSecret = signatureService.ComputeCommitmentSecret();
-            BigInteger secret = new BigInteger(commitmentSecret);
+            var signatureService = new MultiSignature(_sepSecp256K1);
+            var commitmentSecret = signatureService.ComputeCommitmentSecret();
+            var secret = new BigInteger(commitmentSecret);
 
             Assert.AreNotEqual(BigInteger.Zero, secret);
         }
@@ -38,26 +43,27 @@ namespace PVSS.Net.Tests
         [Test]
         public void TestComputeCommitmentNullSecret()
         {
-            MultiSignatureService signatureService = new MultiSignatureService(_sepSecp256K1);
+            var signatureService = new MultiSignature(_sepSecp256K1);
             byte[] commitmentSecret = null;
 
-            var exception = Assert.Throws<NullReferenceException>(() => signatureService.ComputeCommitment(commitmentSecret));
+            var exception =
+                Assert.Throws<NullReferenceException>(() => signatureService.ComputeCommitment(commitmentSecret));
         }
 
         [Test]
         public void TestComputeCommitmentEmptySecret()
         {
-            MultiSignatureService signatureService = new MultiSignatureService(_sepSecp256K1);
-            byte[] commitmentSecret = new byte[0];
+            var signatureService = new MultiSignature(_sepSecp256K1);
+            var commitmentSecret = new byte[0];
             var exception = Assert.Throws<FormatException>(() => signatureService.ComputeCommitment(commitmentSecret));
         }
 
         [Test]
         public void TestComputeCommitmentHash()
         {
-            MultiSignatureService signatureService = new MultiSignatureService(_sepSecp256K1);
-            byte[] commitment = signatureService.ComputeCommitment(signatureService.ComputeCommitmentSecret());
-            byte[] commitmentHash = signatureService.ComputeCommitmentHash(commitment);
+            var signatureService = new MultiSignature(_sepSecp256K1);
+            var commitment = signatureService.ComputeCommitment(signatureService.ComputeCommitmentSecret());
+            var commitmentHash = signatureService.ComputeCommitmentHash(commitment);
 
             Assert.AreNotEqual(commitment, commitmentHash);
         }
@@ -65,9 +71,9 @@ namespace PVSS.Net.Tests
         [Test]
         public void TestValidateCommitmentValid()
         {
-            MultiSignatureService signatureService = new MultiSignatureService(_sepSecp256K1);
-            byte[] commitment = signatureService.ComputeCommitment(signatureService.ComputeCommitmentSecret());
-            byte[] commitmentHash = signatureService.ComputeCommitmentHash(commitment);
+            var signatureService = new MultiSignature(_sepSecp256K1);
+            var commitment = signatureService.ComputeCommitment(signatureService.ComputeCommitmentSecret());
+            var commitmentHash = signatureService.ComputeCommitmentHash(commitment);
 
             Assert.IsTrue(signatureService.ValidateCommitment(commitment, commitmentHash));
         }
@@ -75,18 +81,19 @@ namespace PVSS.Net.Tests
         [Test]
         public void TestAggregateCommitmentsNullCommitments()
         {
-            MultiSignatureService signatureService = new MultiSignatureService(_sepSecp256K1);
+            var signatureService = new MultiSignature(_sepSecp256K1);
             long bitmap = 3;
             List<byte[]> commitments = null;
 
-            var exception = Assert.Throws<NullReferenceException>(() => signatureService.AggregateCommitments(commitments, bitmap));
+            var exception =
+                Assert.Throws<NullReferenceException>(() => signatureService.AggregateCommitments(commitments, bitmap));
         }
 
         public void TestAggregateCommitmentsEmptyCommitments()
         {
-            MultiSignatureService signatureService = new MultiSignatureService(_sepSecp256K1);
+            var signatureService = new MultiSignature(_sepSecp256K1);
             long bitmap = 3;
-            List<byte[]> commitments = new List<byte[]>();
+            var commitments = new List<byte[]>();
 
             var exception = Assert.Throws<Exception>(() => signatureService.AggregateCommitments(commitments, bitmap));
         }
@@ -94,7 +101,7 @@ namespace PVSS.Net.Tests
         [Test]
         public void TestAggregatedCommitment()
         {
-            MultiSignatureService signatureService = new MultiSignatureService(_sepSecp256K1);
+            var signatureService = new MultiSignature(_sepSecp256K1);
             long bitmap = 0b111;
             var commitments = new List<byte[]>
             {
@@ -104,7 +111,8 @@ namespace PVSS.Net.Tests
             };
 
 
-            Assert.AreEqual("02534d4371d6ea9f8b856a632e4e31d784eec9120b3252080702d872c696012289", signatureService.AggregateCommitments(commitments, bitmap).ToHexString());
+            Assert.AreEqual("02534d4371d6ea9f8b856a632e4e31d784eec9120b3252080702d872c696012289",
+                signatureService.AggregateCommitments(commitments, bitmap).ToHexString());
         }
 
         /*
@@ -305,23 +313,25 @@ namespace PVSS.Net.Tests
         [Test]
         public void TestVerifySignatureShareOK()
         {
-            MultiSignatureService signatureService = new MultiSignatureService(_sepSecp256K1);
-            List<byte[]> signers = new List<byte[]>();
-            List<byte[]> commitmentSecrets = new List<byte[]>();
-            List<byte[]> commitments = new List<byte[]>();
+            var signatureService = new MultiSignature(_sepSecp256K1);
+            var signers = new List<byte[]>();
+            var commitmentSecrets = new List<byte[]>();
+            var commitments = new List<byte[]>();
 
             var alice = new Participant("Alice");
             var bob = new Participant("Bob");
             var carol = new Participant("Carol");
 
             long bitmap = 0;
-            var message = string.Concat("The quick brown fox jumps over the lazy dog.".Select(x => ((int)x).ToString("x"))).ToByteArray();
+            var message = string
+                .Concat("The quick brown fox jumps over the lazy dog.".Select(x => ((int) x).ToString("x")))
+                .ToByteArray();
 
             signers.Add(alice.PublicKey);
             signers.Add(bob.PublicKey);
             signers.Add(carol.PublicKey);
 
-            for (int i = 0; i < signers.Count; i++)
+            for (var i = 0; i < signers.Count; i++)
             {
                 bitmap = (bitmap << 1) | 1;
                 commitmentSecrets.Add(signatureService.ComputeCommitmentSecret());
@@ -329,7 +339,8 @@ namespace PVSS.Net.Tests
             }
 
             var aggregatedCommitment = signatureService.AggregateCommitments(commitments, bitmap);
-            var challenge = signatureService.ComputeChallenge(signers, alice.PublicKey, aggregatedCommitment, message, bitmap);
+            var challenge =
+                signatureService.ComputeChallenge(signers, alice.PublicKey, aggregatedCommitment, message, bitmap);
             var signature = signatureService.ComputeSignatureShare(challenge, alice.PrivateKey, commitmentSecrets[0]);
 
             Assert.IsTrue(signatureService.VerifySignatureShare(

@@ -1,4 +1,16 @@
-﻿using System;
+﻿// // -----------------------------------------------------------------------
+// // <copyright file="BigIntegerExtensions.cs" company="Rebecca Powell" year="2020">
+// //      All rights are reserved. Reproduction or transmission in whole or
+// //      in part, in any form or by any means, electronic, mechanical or
+// //      otherwise, is prohibited without the prior written consent of the
+// //      copyright owner.
+// // </copyright>
+// // <summary>
+// //      Definition of the BigIntegerExtensions.cs class.
+// // </summary>
+// // -----------------------------------------------------------------------
+
+using System;
 using System.Numerics;
 using System.Text;
 
@@ -25,7 +37,7 @@ namespace PVSS.net.Extensions
         public static int GetBitLength(this BigInteger n)
         {
             var remainder = n;
-            int bits = 0;
+            var bits = 0;
             while (remainder > 0)
             {
                 remainder = remainder >> 1;
@@ -38,16 +50,12 @@ namespace PVSS.net.Extensions
         public static string ToPolynomialString(this BigInteger n)
         {
             var sb = new StringBuilder();
-            for (int i = n.GetBitLength(); i >= 0; i--)
-            {
+            for (var i = n.GetBitLength(); i >= 0; i--)
                 if (n.TestBit(i))
                 {
-                    if (sb.Length > 0)
-                    {
-                        sb.Append(" + ");
-                    }
+                    if (sb.Length > 0) sb.Append(" + ");
 
-                    sb.Append((i > 0) ? "x" : "1");
+                    sb.Append(i > 0 ? "x" : "1");
 
                     if (i > 1)
                     {
@@ -55,12 +63,8 @@ namespace PVSS.net.Extensions
                         sb.Append(i);
                     }
                 }
-            }
 
-            if (sb.Length == 0)
-            {
-                sb.Append("0");
-            }
+            if (sb.Length == 0) sb.Append("0");
 
             return sb.ToString();
         }
@@ -68,12 +72,13 @@ namespace PVSS.net.Extensions
         public static byte[] ToUnsignedLittleEndianBytes(this BigInteger n)
         {
             var byteArray = n.ToByteArray();
-            if ((byteArray.Length > 1) && (byteArray[byteArray.Length - 1] == 0x00))
+            if (byteArray.Length > 1 && byteArray[byteArray.Length - 1] == 0x00)
             {
                 var byteArrayMissingEnd = new byte[byteArray.Length - 1];
                 Array.Copy(byteArray, byteArrayMissingEnd, byteArrayMissingEnd.Length);
                 return byteArrayMissingEnd;
             }
+
             return byteArray;
         }
 

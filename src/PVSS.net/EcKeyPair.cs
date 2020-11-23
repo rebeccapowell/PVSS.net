@@ -1,21 +1,31 @@
-﻿using System;
-using System.Collections.Generic;
+﻿// // -----------------------------------------------------------------------
+// // <copyright file="EcKeyPair.cs" company="Rebecca Powell" year="2020">
+// //      All rights are reserved. Reproduction or transmission in whole or
+// //      in part, in any form or by any means, electronic, mechanical or
+// //      otherwise, is prohibited without the prior written consent of the
+// //      copyright owner.
+// // </copyright>
+// // <summary>
+// //      Definition of the EcKeyPair.cs class.
+// // </summary>
+// // -----------------------------------------------------------------------
+
+using System;
 using System.Linq;
-using System.Text;
-using Org.BouncyCastle.Asn1.Sec;
 using Org.BouncyCastle.Asn1.X9;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Crypto.Signers;
-using Org.BouncyCastle.Math;
-using Org.BouncyCastle.Math.EC;
 using Org.BouncyCastle.Security;
 
 namespace PVSS.net
 {
     public static class EcKeyPair
     {
+        /// <summary>
+        ///     Generates an Asymmetric Key Pair.
+        /// </summary>
+        /// <returns></returns>
         public static AsymmetricCipherKeyPair GenerateKeyPair()
         {
             var curve = ECNamedCurveTable.GetByName("secp256k1");
@@ -37,6 +47,9 @@ namespace PVSS.net
             return keyPair;
         }
 
-        static string ToHex(byte[] data) => String.Concat(data.Select(x => x.ToString("x2")));
+        private static string ToHex(byte[] data)
+        {
+            return string.Concat(data.Select(x => x.ToString("x2")));
+        }
     }
 }
